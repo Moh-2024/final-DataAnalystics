@@ -5,22 +5,25 @@ sheetNames = excelFile.sheet_names
 
 data = pd.read_excel(r"SeedUnofficialAppleData.xlsx", sheet_name='Sheet1')
 
-#renaming columns and assigning to clean data
-CleanedData = data.columns = ['Model', 'OS Version', 'Release Date', 'Discontinued Date', 
+#renaming columns
+data.columns = ['Model', 'OS Version', 'Release Date', 'Discontinued Date', 
                       'Support End Date', 'Final OS Version', 'Lifespan', 
                       'Support Min', 'Launch Price']
 
+#function for merging price for multiple rows to 1 row
 def mergePrices(df):
-    for i in range(len(df) - 1):
-        current_price = str(df.loc[i, 'Launch Price'])
-        next_price = str(df.loc[i + 1, 'Launch Price'])
-        
-        # If the current price contains '*', append the next row's price
-        if '*' in current_price and pd.isna(df.loc[i + 1, 'Release Date']):
-            df.loc[i, 'Launch Price'] = current_price + ' ' + next_price
+    # Find rows where the price contains '*' and the next row has a missing 'Release Date'
+    checkPrice = df['Launch Price'].str.contains(r'\*', na=False) & df['Release Date'].isna().shift(-1)
     
-    # Drop rows where 'Release Date' is NaN
-    return df.dropna(subset=['Release Date']).reset_index(drop=True)
+    # Iterate over the checkPrice rows
+    for i in df[checkPrice].index:
+        # Combine current row's price with the next row's price
+        df.loc[i, 'Launch Price'] = str(df.loc[i, 'Launch Price']) + ' ' + str(df.loc[i + 1, 'Launch Price'])
+    
+    # Drop rows where 'Release Date' is NaN since they are price continuation rows
+    df = df.dropna(subset=['Release Date']).reset_index(drop=True)
+    
+    return df
 
 
 
