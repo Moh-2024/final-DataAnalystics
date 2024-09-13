@@ -1,17 +1,31 @@
 import pandas as pd
-import re
 
 excelFile = pd.ExcelFile(r"SeedUnofficialAppleData.xlsx")
 sheetNames = excelFile.sheet_names
 
 data = pd.read_excel(r"SeedUnofficialAppleData.xlsx", sheet_name='Sheet1')
 
-CleanedData = data.dropna(subset=[data.columns[0], data.columns[1]]).reset_index(drop=True)
-
-# Renaming columns
-CleanedData.columns = ['Model', 'OS Version', 'Release Date', 'Discontinued Date', 
+#renaming columns and assigning to clean data
+CleanedData = data.columns = ['Model', 'OS Version', 'Release Date', 'Discontinued Date', 
                       'Support End Date', 'Final OS Version', 'Lifespan', 
                       'Support Min', 'Launch Price']
+
+def mergePrices(df):
+    for i in range(len(df) - 1):
+        current_price = str(df.loc[i, 'Launch Price'])
+        next_price = str(df.loc[i + 1, 'Launch Price'])
+        
+        # If the current price contains '*', append the next row's price
+        if '*' in current_price and pd.isna(df.loc[i + 1, 'Release Date']):
+            df.loc[i, 'Launch Price'] = current_price + ' ' + next_price
+    
+    # Drop rows where 'Release Date' is NaN
+    return df.dropna(subset=['Release Date']).reset_index(drop=True)
+
+
+
+CleanedData = mergePrices(data)
+
 
 # Resetting the index for a clean DataFrame
 CleanedData.reset_index(drop=True, inplace=True)
@@ -21,27 +35,46 @@ CleanedData = CleanedData.dropna(subset=['Model'])
 
 
 #Changing years to months
-def convert_to_months(lifespan_str):
-    # Extract years and months using regex
-    years_match = re.search(r'(\d+)\s*year', lifespan_str)
-    months_match = re.search(r'(\d+)\s*month', lifespan_str)
-
-    years = int(years_match.group(1)) if years_match else 0
-    months = int(months_match.group(1)) if months_match else 0
+def ConvertToMonths(lifespan_str):
+    years = 0
+    months = 0
     
-    # Convert lifespan to total months
+    # Split the string into parts
+    parts = lifespan_str.split()
+    
+    #looping through parts to check year and  months
+    for i in range(len(parts)):
+        if "year" in parts[i]:
+            # Get the number before 'year' and handle potential non-numeric characters
+            years_str = ''.join(filter(str.isdigit, parts[i-1]))  # Keep only digits
+            years = int(years_str) if years_str else 0  # Convert to int or set to 0 if empty
+        elif "month" in parts[i]:
+            # Get the number before 'month' and handle potential non-numeric characters
+            months_str = ''.join(filter(str.isdigit, parts[i-1]))  # Keep only digits
+            months = int(months_str) if months_str else 0  # Convert to int or set to 0 if empty
+    
+    
+    #Converting to months
     return years * 12 + months
 
-# Re-applying the conversion process
-CleanedData['Lifespan'] = CleanedData['Lifespan'].apply(lambda x: convert_to_months(x) if isinstance(x, str) else None)
-CleanedData['Support Min'] = CleanedData['Support Min'].apply(lambda x: convert_to_months(x) if isinstance(x, str) else None)
+#function to call convertToMonths function
+def convertLifeSpan(x):
+    # Convert to months if it's a string
+    if isinstance(x, str):
+        return ConvertToMonths(x) 
+    else:
+         # Return None for non-string values
+        return None
+    
+CleanedData['Lifespan'] = CleanedData['Lifespan'].apply(convertLifeSpan)
+CleanedData['Support Min'] = CleanedData['Support Min'].apply(convertLifeSpan)
 
-# Removing decimal points and appending ' months' to the values
+#Removing decimal and adding 'months' at the end
 CleanedData['Lifespan'] = CleanedData['Lifespan'].fillna(0).astype(int).astype(str) + ' months'
 CleanedData['Support Min'] = CleanedData['Support Min'].fillna(0).astype(int).astype(str) + ' months'
 
-CleanedData = CleanedData.drop(index=0).reset_index(drop=True)
 
+#converting release date and discontinued date to datetime
 CleanedData['Release Date'] = pd.to_datetime(CleanedData['Release Date'], errors='coerce')
 CleanedData['Discontinued Date'] = pd.to_datetime(CleanedData['Discontinued Date'], errors='coerce')
 
