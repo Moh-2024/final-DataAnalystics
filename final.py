@@ -1,4 +1,5 @@
 import pandas as pd
+import re
 
 excelFile = pd.ExcelFile(r"SeedUnofficialAppleData.xlsx")
 sheetNames = excelFile.sheet_names
@@ -10,15 +11,22 @@ data.columns = ['Model', 'OS Version', 'Release Date', 'Discontinued Date',
                       'Support End Date', 'Final OS Version', 'Lifespan', 
                       'Support Min', 'Launch Price']
 
+def price(priceStr):
+    regex = '\d+'
+    prices = re.findall(regex, priceStr)
+    return[int(price) for price in prices ]
+
+
 #function for merging price for multiple rows to 1 row
 def mergePrices(df):
-    # Find rows where the price contains '*' and the next row has a missing 'Release Date'
+    # checking if launch price has '*' and release date is nan
     checkPrice = df['Launch Price'].str.contains(r'\*', na=False) & df['Release Date'].isna().shift(-1)
     
     # Iterate over the checkPrice rows
     for i in df[checkPrice].index:
         # Combine current row's price with the next row's price
         df.loc[i, 'Launch Price'] = str(df.loc[i, 'Launch Price']) + ' ' + str(df.loc[i + 1, 'Launch Price'])
+        
     
     # Drop rows where 'Release Date' is NaN since they are price continuation rows
     df = df.dropna(subset=['Release Date']).reset_index(drop=True)
@@ -26,14 +34,14 @@ def mergePrices(df):
     return df
 
 
-
+#initiliazing cleandata calling in merge price function
 CleanedData = mergePrices(data)
 
 
 # Resetting the index for a clean DataFrame
 CleanedData.reset_index(drop=True, inplace=True)
 
-
+#removing rows on Model column it its nan
 CleanedData = CleanedData.dropna(subset=['Model'])
 
 
