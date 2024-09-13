@@ -11,6 +11,7 @@ data.columns = ['Model', 'OS Version', 'Release Date', 'Discontinued Date',
                       'Support End Date', 'Final OS Version', 'Lifespan', 
                       'Support Min', 'Launch Price']
 
+#getting price from the Lauch prices column 
 def price(priceStr):
     regex = '\d+'
     prices = re.findall(regex, priceStr)
@@ -26,7 +27,7 @@ def mergePrices(df):
     for i in df[checkPrice].index:
         # Combine current row's price with the next row's price
         df.loc[i, 'Launch Price'] = str(df.loc[i, 'Launch Price']) + ' ' + str(df.loc[i + 1, 'Launch Price'])
-        
+
     
     # Drop rows where 'Release Date' is NaN since they are price continuation rows
     df = df.dropna(subset=['Release Date']).reset_index(drop=True)
