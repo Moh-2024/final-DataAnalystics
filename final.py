@@ -1,5 +1,6 @@
 import pandas as pd
 import re
+import numpy as np
 
 excelFile = pd.ExcelFile(r"SeedUnofficialAppleData.xlsx")
 sheetNames = excelFile.sheet_names
@@ -77,7 +78,24 @@ def convertLifeSpan(x):
     else:
          # Return None for non-string values
         return None
-    
+
+def averageLaunchPrices(input):
+    values = str(input).split('*')
+    averages = []
+    for v in values:
+       splitNumbers = re.split(r'\D',str(v))
+       numbersList = []
+       for sn in splitNumbers:
+            if sn != '' :
+                numbersList.append(int(sn))
+       if len(numbersList) > 0:
+        averages.append(sum(numbersList)/len(numbersList))
+    returningString = ""
+    for average in averages:
+        returningString += str(int(average)) + "*"
+    return returningString
+        
+
 CleanedData['Lifespan'] = CleanedData['Lifespan'].apply(convertLifeSpan)
 CleanedData['Support Min'] = CleanedData['Support Min'].apply(convertLifeSpan)
 
@@ -85,6 +103,7 @@ CleanedData['Support Min'] = CleanedData['Support Min'].apply(convertLifeSpan)
 CleanedData['Lifespan'] = CleanedData['Lifespan'].fillna(0).astype(int).astype(str) + ' months'
 CleanedData['Support Min'] = CleanedData['Support Min'].fillna(0).astype(int).astype(str) + ' months'
 
+CleanedData['Launch Price'] = list(CleanedData['Launch Price'].map(averageLaunchPrices))
 
 #converting release date and discontinued date to datetime
 CleanedData['Release Date'] = pd.to_datetime(CleanedData['Release Date'], errors='coerce')
