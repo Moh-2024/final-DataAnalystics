@@ -1,6 +1,7 @@
 import pandas as pd
 import re
 import numpy as np
+from datetime import date
 
 excelFile = pd.ExcelFile(r"SeedUnofficialAppleData.xlsx")
 sheetNames = excelFile.sheet_names
@@ -83,8 +84,8 @@ def averageLaunchPrices(input):
         if sn != '' :
             numbersList.append(int(sn))
     return str(int(sum(numbersList)/len(numbersList)))
-        
 
+    
 CleanedData['Lifespan'] = CleanedData['Lifespan'].apply(convertLifeSpan)
 CleanedData['Support Min'] = CleanedData['Support Min'].apply(convertLifeSpan)
 
