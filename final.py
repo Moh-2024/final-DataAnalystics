@@ -2,6 +2,7 @@ import pandas as pd
 import re
 import numpy as np
 from datetime import date
+import plotly.express as px
 
 excelFile = pd.ExcelFile(r"SeedUnofficialAppleData.xlsx")
 sheetNames = excelFile.sheet_names
@@ -116,3 +117,70 @@ CleanedData.to_csv(csv_file_path, index=False)
 csv_file_path
 
 #print(CleanedData)
+changepriceovertime = px.scatter(CleanedData, 
+                  x="Release Date", 
+                  y="Launch Price", 
+                  text="Model",
+                  title="Change in iPhone Price Over Time", 
+                  labels={"Release Date": "Release Date", "Launch Price": "Launch Price", "Model":"Model"})
+changepriceovertime.update_traces(textposition='top center')
+
+changepriceovertime.write_html('changepriceovertime.html')
+
+lifespan = px.scatter(CleanedData, 
+                  x="Launch Price", 
+                  y="Lifespan", 
+                  title="Change in iPhone lifespan with price", 
+                  labels={"Lifespan": "Lifespan", "Launch Price": "Launch Price", "Model":"Model"})
+lifespan.update_traces(textposition='top center')
+
+lifespan.write_html('changelifeoverprice.html')
+
+support = px.scatter(CleanedData, 
+                  x="Support End Date", 
+                  y="Lifespan", 
+                  title="iPhone Lifespan vs Support", 
+                  labels={"Lifespan": "Lifespan", "Support End Date": "Support End Date", "Model":"Model"})
+support.update_traces(textposition='top center')
+
+support.write_html('lifevssupport.html')
+
+
+support2 = px.scatter(CleanedData, 
+                  x="Support Min", 
+                  y="Lifespan", 
+                  title="iPhone Lifespan vs Support Minimum", 
+                  labels={"Lifespan": "Lifespan", "Support Min": "Support Minimum", "Model":"Model"})
+support2.update_traces(textposition='top center')
+
+support2.write_html('lifevssupportmin.html')
+
+priceOS = px.scatter(CleanedData, 
+                  x="OS Version", 
+                  y="Launch Price", 
+                  title="iPhone Price vs OS Version", 
+                  text="Model",
+                  labels={"OS Version": "OS Version", "Launch Price": "Launch Price", "Model":"Model"})
+priceOS.update_traces(textposition='top center')
+
+priceOS.write_html('priceOS.html')
+
+priceFinalOS = px.scatter(CleanedData, 
+                  x="Final OS Version", 
+                  y="Launch Price", 
+                  title="iPhone Price vs Final OS Version", 
+                  text="Model",
+                  labels={"Final OS Version": "Final OS Version", "Launch Price": "Launch Price", "Model":"Model"})
+priceFinalOS.update_traces(textposition='top center')
+
+priceFinalOS.write_html('priceFinalOS.html')
+
+startOSfinalOS = px.scatter(CleanedData, 
+                  x="Final OS Version", 
+                  y="OS Version", 
+                  title="Start OS Version vs Final OS Version", 
+                  text="Model",
+                  labels={"Final OS Version": "Final OS Version", "OS Version": "OS Version", "Model":"Model"})
+startOSfinalOS.update_traces(textposition='top center')
+
+startOSfinalOS.write_html('startOSFinalOS.html')
