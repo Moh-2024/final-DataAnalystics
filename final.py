@@ -11,12 +11,6 @@ data.columns = ['Model', 'OS Version', 'Release Date', 'Discontinued Date',
                       'Support End Date', 'Final OS Version', 'Lifespan', 
                       'Support Min', 'Launch Price']
 
-#getting price from the Lauch prices column 
-def price(priceStr):
-    regex = '\d+'
-    prices = re.findall(regex, priceStr)
-    return[int(price) for price in prices ]
-
 
 #function for merging price for multiple rows to 1 row
 def mergePrices(df):
@@ -69,6 +63,9 @@ def ConvertToMonths(lifespan_str):
     #Converting to months
     return years * 12 + months
 
+CleanedData['Model'] = CleanedData['Model'].str.split('/').explode('Model').reset_index(drop=True)
+print(CleanedData)
+    
 #function to call convertToMonths function
 def convertLifeSpan(x):
     # Convert to months if it's a string
@@ -106,4 +103,4 @@ CleanedData.to_csv(csv_file_path, index=False)
 # Providing the path to the user
 csv_file_path
 
-print(CleanedData)
+#print(CleanedData)
