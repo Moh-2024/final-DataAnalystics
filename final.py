@@ -80,20 +80,12 @@ def convertLifeSpan(x):
         return None
 
 def averageLaunchPrices(input):
-    values = str(input).split('*')
-    averages = []
-    for v in values:
-       splitNumbers = re.split(r'\D',str(v))
-       numbersList = []
-       for sn in splitNumbers:
-            if sn != '' :
-                numbersList.append(int(sn))
-       if len(numbersList) > 0:
-        averages.append(sum(numbersList)/len(numbersList))
-    returningString = ""
-    for average in averages:
-        returningString += str(int(average)) + "*"
-    return returningString
+    splitNumbers = re.split(r'\D',str(input))
+    numbersList = []
+    for sn in splitNumbers:
+        if sn != '' :
+            numbersList.append(int(sn))
+    return str(int(sum(numbersList)/len(numbersList)))
         
 
 CleanedData['Lifespan'] = CleanedData['Lifespan'].apply(convertLifeSpan)
