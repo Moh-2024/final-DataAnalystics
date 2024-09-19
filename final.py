@@ -7,9 +7,9 @@ from statistics import mean
 import matplotlib.pyplot as plt
 from matplotlib import style
 
+# reading the data from file
 excelFile = pd.ExcelFile(r"SeedUnofficialAppleData.xlsx")
 sheetNames = excelFile.sheet_names
-
 data = pd.read_excel(r"SeedUnofficialAppleData.xlsx", sheet_name='Sheet1')
 
 #renaming columns
@@ -37,7 +37,6 @@ def mergePrices(df):
 
 #initiliazing cleandata calling in merge price function
 CleanedData = mergePrices(data)
-
 
 # Resetting the index for a clean DataFrame
 CleanedData.reset_index(drop=True, inplace=True)
@@ -69,6 +68,8 @@ def ConvertToMonths(lifespan_str):
     #Converting to months
     return years * 12 + months
 
+
+#splitting Model names after / and adding in on the next row using explode function
 CleanedData['Model'] = CleanedData['Model'].str.split('/').explode('Model').reset_index(drop=True)
     
 #function to call convertToMonths function
@@ -80,6 +81,7 @@ def convertLifeSpan(x):
          # Return None for non-string values
         return None
 
+#function to average launch prices
 def averageLaunchPrices(input):
     splitNumbers = re.split(r'\D',str(input))
     numbersList = []
@@ -88,7 +90,7 @@ def averageLaunchPrices(input):
             numbersList.append(int(sn))
     return str(int(sum(numbersList)/len(numbersList)))
 
-    
+#converting lifespan and minimum support to months by calling in function  
 CleanedData['Lifespan'] = CleanedData['Lifespan'].apply(convertLifeSpan)
 CleanedData['Support Min'] = CleanedData['Support Min'].apply(convertLifeSpan)
 
@@ -96,6 +98,7 @@ CleanedData['Support Min'] = CleanedData['Support Min'].apply(convertLifeSpan)
 CleanedData['Lifespan'] = CleanedData['Lifespan'].fillna(0).astype(int).astype(str) + ' months'
 CleanedData['Support Min'] = CleanedData['Support Min'].fillna(0).astype(int).astype(str) + ' months'
 
+#setting the launch price to average price by calling in average price function
 CleanedData['Launch Price'] = list(CleanedData['Launch Price'].map(averageLaunchPrices))
 
 #converting release date and discontinued date to datetime
@@ -137,14 +140,14 @@ for i in range(1, len(CleanedData)):
 #printing clean data
 print(CleanedData)
 
-
+#creating the csv file for cleaned data
 csv_file_path = 'Cleaned_Apple_Data.csv'
 CleanedData.to_csv(csv_file_path, index=False)
 
 # Providing the path to the user
 csv_file_path
 
-#print(CleanedData)
+# scatter plot for change price over time 
 changepriceovertime = px.scatter(CleanedData, 
                   x="Release Date", 
                   y="Launch Price", 
@@ -155,54 +158,17 @@ changepriceovertime.update_traces(textposition='top center')
 
 changepriceovertime.write_html('changepriceovertime.html')
 
+# scatter plot for lifespan and Model
 lifespan = px.scatter(CleanedData, 
-                  x="Launch Price", 
+                  x="Model", 
                   y="Lifespan", 
-                  title="Change in iPhone lifespan with price", 
-                  labels={"Lifespan": "Lifespan", "Launch Price": "Launch Price", "Model":"Model"})
+                  title="Change in iPhone lifespan with Model", 
+                  labels={"Lifespan": "Lifespan", "Model": "Model"})
 lifespan.update_traces(textposition='top center')
 
 lifespan.write_html('changelifeoverprice.html')
 
-support = px.scatter(CleanedData, 
-                  x="Support End Date", 
-                  y="Lifespan", 
-                  title="iPhone Lifespan vs Support", 
-                  labels={"Lifespan": "Lifespan", "Support End Date": "Support End Date", "Model":"Model"})
-support.update_traces(textposition='top center')
-
-support.write_html('lifevssupport.html')
-
-
-support2 = px.scatter(CleanedData, 
-                  x="Support Min", 
-                  y="Lifespan", 
-                  title="iPhone Lifespan vs Support Minimum", 
-                  labels={"Lifespan": "Lifespan", "Support Min": "Support Minimum", "Model":"Model"})
-support2.update_traces(textposition='top center')
-
-support2.write_html('lifevssupportmin.html')
-
-priceOS = px.scatter(CleanedData, 
-                  x="OS Version", 
-                  y="Launch Price", 
-                  title="iPhone Price vs OS Version", 
-                  text="Model",
-                  labels={"OS Version": "OS Version", "Launch Price": "Launch Price", "Model":"Model"})
-priceOS.update_traces(textposition='top center')
-
-priceOS.write_html('priceOS.html')
-
-priceFinalOS = px.scatter(CleanedData, 
-                  x="Final OS Version", 
-                  y="Launch Price", 
-                  title="iPhone Price vs Final OS Version", 
-                  text="Model",
-                  labels={"Final OS Version": "Final OS Version", "Launch Price": "Launch Price", "Model":"Model"})
-priceFinalOS.update_traces(textposition='top center')
-
-priceFinalOS.write_html('priceFinalOS.html')
-
+#scatter plot for starting and ending OS versions
 startOSfinalOS = px.scatter(CleanedData, 
                   x="Final OS Version", 
                   y="OS Version", 
