@@ -3,6 +3,9 @@ import re
 import numpy as np
 from datetime import date
 import plotly.express as px
+from statistics import mean
+import matplotlib.pyplot as plt
+from matplotlib import style
 
 excelFile = pd.ExcelFile(r"SeedUnofficialAppleData.xlsx")
 sheetNames = excelFile.sheet_names
@@ -67,7 +70,6 @@ def ConvertToMonths(lifespan_str):
     return years * 12 + months
 
 CleanedData['Model'] = CleanedData['Model'].str.split('/').explode('Model').reset_index(drop=True)
-print(CleanedData)
     
 #function to call convertToMonths function
 def convertLifeSpan(x):
@@ -101,13 +103,39 @@ CleanedData['Release Date'] = pd.to_datetime(CleanedData['Release Date'], errors
 CleanedData['Discontinued Date'] = pd.to_datetime(CleanedData['Discontinued Date'], errors='coerce')
 
 # Calculate the median lifespan (in days) for the entries where both dates are available
-median_lifespan_days = (CleanedData['Discontinued Date'] - CleanedData['Release Date']).median().days
+medianLifespanDays = (CleanedData['Discontinued Date'] - CleanedData['Release Date']).median().days
 
 # Fill missing discontinued dates by adding the median lifespan to the release date
-CleanedData['Discontinued Date'] = CleanedData['Discontinued Date'].fillna(CleanedData['Release Date'] + pd.to_timedelta(median_lifespan_days, unit='D'))
+CleanedData['Discontinued Date'] = CleanedData['Discontinued Date'].fillna(CleanedData['Release Date'] + pd.to_timedelta(medianLifespanDays, unit='D'))
 
 # Displaying the updated dataframe
 CleanedData[['Model', 'Release Date', 'Discontinued Date']].head()
+
+#sorting the clean data for Models release date
+CleanedData = CleanedData.sort_values(by='Release Date')
+
+#for loop to check if there is nan in  release date
+for i in range(1, len(CleanedData)):
+    if pd.isna(CleanedData['Release Date'].iloc[i]):
+        #get the previous row release date
+        previousDate = CleanedData['Release Date'].iloc[i - 1]
+        #predict the new date by adding 1 year from the previous release date
+        predictDate = pd.to_datetime(previousDate) + pd.DateOffset(years=1)
+        #adding the predict date to nan release date
+        CleanedData['Release Date'].iloc[i] = predictDate
+
+#for loop to check for nan discountinued date
+for i in range(1, len(CleanedData)):
+    if pd.isna(CleanedData['Discontinued Date'].iloc[i]):
+        #getting the release date
+        releaseDate = CleanedData['Release Date'].iloc[i]
+        #
+        discontinuedDate = pd.to_datetime(releaseDate) + pd.to_timedelta(medianLifespanDays, unit='D')
+
+        CleanedData['Discontinued Date'].iloc[i] = discontinuedDate
+
+#printing clean data
+print(CleanedData)
 
 
 csv_file_path = 'Cleaned_Apple_Data.csv'
@@ -184,3 +212,47 @@ startOSfinalOS = px.scatter(CleanedData,
 startOSfinalOS.update_traces(textposition='top center')
 
 startOSfinalOS.write_html('startOSFinalOS.html')
+
+
+######################     BEST FIT LINE  ##################
+#getting year for release yer
+CleanedData['Release Year'] = CleanedData['Release Date'].dt.year
+#launch price as float
+CleanedData['Launch Price'] = CleanedData['Launch Price'].astype(float)
+
+#creating array for x and y with launch price and release year
+xs = np.array(CleanedData['Launch Price'].values)
+ys = np.array(CleanedData['Release Year'].values)
+
+
+# Calculate the best fit slope (m) and intercept (b)
+def slopeIntercept(xs, ys):
+    m = (((mean(xs) * mean(ys)) - mean(xs * ys)) /
+         ((mean(xs) * mean(xs)) - mean(xs * xs)))
+    b = mean(ys) - m * mean(xs)
+    return m, b
+
+
+# Get the slope and intercept
+m, b = slopeIntercept(xs, ys)
+
+# Generate the regression line for visualization
+regression_line = [(m * x) + b for x in xs]
+
+#style the plot
+style.use('ggplot')
+
+#predict future year
+futureYears = [2025, 2026, 2030]
+#solve for x which is price, x = y - b / m
+predictedPrice = [(year - b) / m for year in futureYears]
+
+#displaying the plot
+plt.scatter(xs, ys, color='#003F72', label='Actual Data')  # Plot the actual data
+plt.plot(xs, regression_line, label='Regression Line', color='orange')  # Plot the regression line
+plt.scatter(predictedPrice, futureYears, color='g', label='Predicted Prices', marker='x', s=50)
+plt.xlabel('Launch Price ($)')
+plt.ylabel('Release Year')
+plt.title('Price vs Year with Future Predictions')
+plt.legend(loc='best')
+plt.show()
