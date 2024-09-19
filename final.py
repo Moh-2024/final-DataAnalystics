@@ -109,7 +109,8 @@ CleanedData['Discontinued Date'] = pd.to_datetime(CleanedData['Discontinued Date
 medianLifespanDays = (CleanedData['Discontinued Date'] - CleanedData['Release Date']).median().days
 
 # Fill missing discontinued dates by adding the median lifespan to the release date
-CleanedData['Discontinued Date'] = CleanedData['Discontinued Date'].fillna(CleanedData['Release Date'] + pd.to_timedelta(medianLifespanDays, unit='D'))
+CleanedData['Discontinued Date'] = CleanedData['Discontinued Date'].fillna(CleanedData['Release Date'] + 
+                                                        pd.to_timedelta(medianLifespanDays, unit='D'))
 
 # Displaying the updated dataframe
 CleanedData[['Model', 'Release Date', 'Discontinued Date']].head()
@@ -190,14 +191,12 @@ CleanedData['Launch Price'] = CleanedData['Launch Price'].astype(float)
 xs = np.array(CleanedData['Launch Price'].values)
 ys = np.array(CleanedData['Release Year'].values)
 
-
 # Calculate the best fit slope (m) and intercept (b)
 def slopeIntercept(xs, ys):
     m = (((mean(xs) * mean(ys)) - mean(xs * ys)) /
          ((mean(xs) * mean(xs)) - mean(xs * xs)))
     b = mean(ys) - m * mean(xs)
     return m, b
-
 
 # Get the slope and intercept
 m, b = slopeIntercept(xs, ys)
@@ -221,4 +220,5 @@ plt.xlabel('Launch Price ($)')
 plt.ylabel('Release Year')
 plt.title('Price vs Year with Future Predictions')
 plt.legend(loc='best')
+plt.savefig('changePriceovertime')
 plt.show()
